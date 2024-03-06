@@ -1,110 +1,151 @@
 ----------------------------------------------------------------------------------
--- @Name 	EPP
---	@Version	0.2
--- @Author	Maximilian Passarello
--- @E-Mail	atom-dragon@gmx.net
+-- @name        Digilent EPP Interface
+-- @version     0.3.0
+-- @author      Maximilian Passarello (mpassarello.de)
+--@             An EPP interface for Digilent FPGA boards
+--@             This interface is designed to be used with the Digilent EPP interface
+--@             and the Digilent Adept software.
+-- @history
+-- - 0.2.0 (2010.05.30) Initial version
+-- - 0.3.0 (2024.03.06) Refactored and commented
 ----------------------------------------------------------------------------------
-LIBRARY IEEE;
-USE IEEE.STD_LOGIC_1164.ALL;
-USE IEEE.NUMERIC_STD.ALL;
+-- Timing Diagram's
+-- EPP Address Write
+--@ {
+--@   "signal": [
+--@     { "name": "DEPP_Bus", "wave": "xx3....xxx", "data": ["Adress"] },
+--@     { "name": "DEPP_WriteEnable", "wave": "1.0....1.." },
+--@     { "node": "...A...B", "phase": 0.15 },
+--@     { "name": "DEPP_AddressEnable", "wave": "1..0...1.." },
+--@     { "node": "...E.F.H.I", "phase": 0.15 },
+--@     { "node": ".C.D.G", "phase": 0.15 },
+--@     { "name": "DEPP_Wait", "wave": "x0...1...0" }
+--@   ],
+--@   "head": {
+--@     "text": "EPP Address Write"
+--@   },
+--@   "foot": {
+--@     "text": "EPP Address Write Cycle Timing Diagram"
+--@   },
+--@   "edge": ["A+B min. 80 ns", "C+D min. 40ns", "E+F 0 to 10ms", "H+I 0 to 10ms"]
+--@ }
+library IEEE;
+use IEEE.STD_LOGIC_1164.all;
+use IEEE.NUMERIC_STD.all;
 
-ENTITY EPP IS
-    GENERIC (RegisterQuant : INTEGER := 4);
-    PORT (
-        CLK : IN STD_LOGIC;
-        CE : IN STD_LOGIC;
-        RST : IN STD_LOGIC;
-        EPPAddE : IN STD_LOGIC;
-        EPPDataE : IN STD_LOGIC;
-        EPPWE : IN STD_LOGIC;
-        EPPD : INOUT STD_LOGIC_VECTOR(7 DOWNTO 0) := (OTHERS => 'Z');
-        EPPWait : OUT STD_LOGIC;
-        Dout : OUT STD_LOGIC_VECTOR((RegisterQuant * 8) - 1 DOWNTO 0);
-        Din : IN STD_LOGIC_VECTOR((RegisterQuant * 8) - 1 DOWNTO 0));
-END EPP;
+entity DEPP is
+    generic (
+        --@ Number of 8-bit registers
+        --@ `DOut` and `DIn` are 8 times this width
+        RegisterQuant : integer := 1
+    );
+    port (
+        --@ Clock signal
+        --@ Rising edge triggered
+        CLK : in std_logic;
+        --@ Chip enable
+        --@ `1` = enabled, `0` = disabled
+        CE : in std_logic;
+        --@ Reset signal
+        --@ `1` = reset, `0` = normal operation
+        RST : in std_logic;
+        --@ @virtualbus EPP-Interface EPP Interface 
+        --@ Address strobe 
+        DEPP_AddressEnable : in std_logic;
+        --@ Data strobe
+        DEPP_DataEnable : in std_logic;
+        --@ Transfer direction control
+        --@ `1` = read (Host from DEPP), `0` = write (Host to DEPP)
+        DEPP_WriteEnable : in std_logic;
+        --@ Handshake signal
+        --@ : `0` = ready for new cycle, `1` = closing current cycle; Keep the signal low to delay the cycle length
+        DEPP_Wait : out std_logic;
+        --@ Data/Adress bus
+        DEPP_Bus : inout std_logic_vector(7 downto 0) := (others => 'Z');
+        --@ @end
+        --@ Data output
+        DOut : out std_logic_vector((RegisterQuant * 8) - 1 downto 0);
+        --@ Data input
+        DIn : in std_logic_vector((RegisterQuant * 8) - 1 downto 0));
+end DEPP;
 
-ARCHITECTURE Behavioral OF EPP IS
+architecture Behavioral of DEPP is
 
-    FUNCTION log2_ceil(N : INTEGER) RETURN INTEGER IS
-    BEGIN
-        IF (N <= 2) THEN
-            RETURN 1;
-        ELSE
-            IF (N MOD 2 = 0) THEN
-                RETURN 1 + log2_ceil(N/2);
-            ELSE
-                RETURN 1 + log2_ceil((N + 1)/2);
-            END IF;
-        END IF;
-    END FUNCTION log2_ceil;
+    --@ Function to calculate the number of bits needed to address the `N` registers
+    function min_bits_for_states(N : integer) return integer is
+    begin
+        if (N <= 2) then
+            return 1;
+        else
+            if (N mod 2 = 0) then
+                return 1 + min_bits_for_states(N/2);
+            else
+                return 1 + min_bits_for_states((N + 1)/2);
+            end if;
+        end if;
+    end function min_bits_for_states;
 
-    TYPE RegisterType IS ARRAY(RegisterQuant - 1 DOWNTO 0)
-    OF STD_LOGIC_VECTOR(7 DOWNTO 0);
+    type RegisterType is array(RegisterQuant - 1 downto 0)
+    of std_logic_vector(7 downto 0);
 
-    SIGNAL RegistersIn : RegisterType;
-    SIGNAL RegistersOut : RegisterType;
+    signal RegistersIn  : RegisterType;
+    signal RegistersOut : RegisterType;
 
-    SIGNAL EPPDInternal : STD_LOGIC_VECTOR(7 DOWNTO 0);
-    SIGNAL Adress : STD_LOGIC_VECTOR(log2_ceil(RegisterQuant) - 1 DOWNTO 0);
-BEGIN
+    signal EPPDInternal : std_logic_vector(7 downto 0);
+    signal Adress       : std_logic_vector(min_bits_for_states(RegisterQuant) - 1 downto 0);
 
-    EPPWait <= '1' WHEN EPPDataE = '0' OR EPPAddE = '0' ELSE
+    signal Intern_CE  : std_logic := '1';
+    signal Intern_RST : std_logic := '0';
+begin
+
+    DEPP_Wait <= '1' when DEPP_DataEnable = '0' or DEPP_AddressEnable = '0' else
         '0';
 
-    EPPD <= EPPDInternal WHEN (EPPWE = '1') ELSE
+    DEPP_Bus <= EPPDInternal when (DEPP_WriteEnable = '1') else
         "ZZZZZZZZ";
 
-    PROCESS (EPPAddE)
-    BEGIN
-        IF rising_edge(EPPAddE) THEN
-            IF EPPWE = '0' THEN
-                Adress <= EPPD(log2_ceil(RegisterQuant) - 1 DOWNTO 0);
-            END IF;
-        END IF;
-    END PROCESS;
+    DEPP_AddrIn : process (DEPP_AddressEnable)
+    begin
+        if rising_edge(DEPP_AddressEnable) then
+            if DEPP_WriteEnable = '0' then
+                Adress <= DEPP_Bus(min_bits_for_states(RegisterQuant) - 1 downto 0);
+            end if;
+        end if;
+    end process;
 
-    --	process(EPPAddE)
-    --	begin
-    --		if falling_edge(EPPAddE) then
-    --			if EPPWE = '1' then
-    --				EPPDInternal(log2_ceil(RegisterQuant)-1 downto 0) <= Adress;
-    --			end if;
-    --		end if;
-    --	end process;
-
-    PROCESS (EPPDataE)
-    BEGIN
-        IF rising_edge(EPPDataE) THEN
-            IF EPPWE = '0' THEN
-                RegistersOut(to_integer(unsigned(Adress))) <= EPPD;
-            END IF;
-        END IF;
-    END PROCESS;
+    DEPP_DIn : process (DEPP_DataEnable)
+    begin
+        if rising_edge(DEPP_DataEnable) then
+            if DEPP_WriteEnable = '0' then
+                RegistersOut(to_integer(unsigned(Adress))) <= DEPP_Bus;
+            end if;
+        end if;
+    end process;
     EPPDInternal <= RegistersIn(to_integer(unsigned(Adress)));
 
-    PROCESS (CLK)
-    BEGIN
-        IF rising_edge(CLK) THEN
-            IF RST = '1' THEN
-                Dout <= (OTHERS => '0');
-            ELSIF CE = '1' THEN
-                FOR i IN 0 TO RegisterQuant - 1 LOOP
-                    Dout(((i + 1) * 8) - 1 DOWNTO ((i) * 8)) <= RegistersOut(i);
-                END LOOP;
-            END IF;
-        END IF;
-    END PROCESS;
+    DOutRegister : process (CLK)
+    begin
+        if rising_edge(CLK) then
+            if Intern_RST = '1' then
+                DOut <= (others => '0');
+            elsif Intern_CE = '1' then
+                for i in 0 to RegisterQuant - 1 loop
+                    DOut(((i + 1) * 8) - 1 downto ((i) * 8)) <= RegistersOut(i);
+                end loop;
+            end if;
+        end if;
+    end process;
 
-    PROCESS (CLK)
-    BEGIN
-        IF rising_edge(CLK) THEN
-            IF RST = '1' THEN
-                NULL;
-            ELSIF CE = '1' THEN
-                FOR i IN 0 TO RegisterQuant - 1 LOOP
-                    RegistersIn(i) <= Din(((i + 1) * 8) - 1 DOWNTO ((i) * 8));
-                END LOOP;
-            END IF;
-        END IF;
-    END PROCESS;
-END Behavioral;
+    DInRegister : process (CLK)
+    begin
+        if rising_edge(CLK) then
+            if Intern_RST = '1' then
+                null;
+            elsif Intern_CE = '1' then
+                for i in 0 to RegisterQuant - 1 loop
+                    RegistersIn(i) <= DIn(((i + 1) * 8) - 1 downto ((i) * 8));
+                end loop;
+            end if;
+        end if;
+    end process;
+end Behavioral;
