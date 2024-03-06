@@ -1,0 +1,18 @@
+{
+  "signal": [
+    { "name": "DEPP_Bus", "wave": "xx3....xxx", "data": ["Adress"] },
+    { "name": "DEPP_WriteEnable", "wave": "1.0....1.." },
+    { "node": "...A...B", "phase": 0.15 },
+    { "name": "DEPP_AddressEnable", "wave": "1..0...1.." },
+    { "node": "...E.F.H.I", "phase": 0.15 },
+    { "node": ".C.D.G", "phase": 0.15 },
+    { "name": "DEPP_Wait", "wave": "x0...1...0" }
+  ],
+  "head": {
+    "text": "EPP Address Write"
+  },
+  "foot": {
+    "text": "EPP Address Write Cycle Timing Diagram"
+  },
+  "edge": ["A+B min. 80 ns", "C+D min. 40ns", "E+F 0 to 10ms", "H+I 0 to 10ms"]
+}
