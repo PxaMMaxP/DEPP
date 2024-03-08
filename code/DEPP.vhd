@@ -12,7 +12,7 @@
 -- @history
 -- - 0.2.0 (2010.05.30) Initial version
 -- - 0.3.0 (2024.03.06) Refactored and commented
--- - 0.3.1 (2024.03.07) TODO
+-- - 0.3.1 (2024.03.09) Complet overhaul of the module
 ----------------------------------------------------------------------------------
 -- Timing Diagram's
 -- EPP Address Write
