@@ -24,6 +24,10 @@ The `DEPP.vhd` module is designed as an Enhanced Parallel Port (EPP) interface f
 
   ![Waveform of the EPP Data Read Cycle](docs/DEPP/wavedrom_91sO2.svg "EPP Data Read")
 
+### Logic Analyzer Captures
+
+The captures can be found in the [Logic Analyzer Captures](docs/Logic%20Analyzer%20Captures/Logic%20Analyzer%20Captures.md) directory.
+
 ## Port Definitions
 
 | Port Name        | Direction | Type        | Description                                        |
