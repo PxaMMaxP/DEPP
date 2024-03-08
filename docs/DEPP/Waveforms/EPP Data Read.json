@@ -1,0 +1,20 @@
+{
+  "signal": [
+    { "name": "DEPP_Bus", "wave": "zz...3...x", "data": ["Adress"] },
+    { "node": "...J.K.L.M", "phase": 0.15 },
+    { "name": "DEPP_WriteEnable", "wave": "x1........" },
+    { "node": "...A...B", "phase": 0.15 },
+    { "name": "DEPP_DataEnable", "wave": "1..0...1.." },
+    { "node": "...E..FH.I", "phase": 0.15 },
+    { "node": ".C.D.G", "phase": 0.15 },
+    { "name": "DEPP_Wait", "wave": "x0....1..0" }
+  ],
+  "head": {
+    "text": "EPP Data Read"
+  },
+  "foot": {
+    "text": "EPP Data Read Cycle Timing Diagram"
+  },
+  "edge": ["A+B min. 80 ns", "C+D min. 40 ns", "E+F 0 to 10 ms", "H+I 0 to 10 ms", "J+K max. 20 ns", "L+M min. 20 ns"
+          ]
+}

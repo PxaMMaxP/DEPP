@@ -1,45 +1,52 @@
-# English
+# VHDL Module for the Digilent Asynchronous Parallel Port Interface (DEPP)
 
-## VHDL Project Template Using Xilinx Build Tools with Makefile
+## Overview
 
-Welcome to the VHDL Project Template repository. This project is designed to streamline your FPGA development process using the Xilinx ISE Build Tools, integrated with a convenient Makefile approach for building and synthesizing your VHDL designs.
+The `DEPP.vhd` module is designed as an Enhanced Parallel Port (EPP) interface for use with Digilent FPGA boards. It facilitates communication between a host computer and the FPGA via the Digilent Adept software, supporting operations such as address write, data write, and data read cycles.
 
-### Using the Makefile
+## Features
 
-To use the Makefile for building your VHDL projects, ensure you have the Xilinx Build Tools installed on your system. The Makefile is specifically configured to work with these tools to automate the build process.
+- Designed for integration with Digilent FPGA boards.
+- Supports data transfers with Digilent Adept software.
+- Measured data rate of approximately 4.68 kByte/s.
 
-For detailed instructions on how to use the Makefile, please refer to the following URL: [Xilinx ISE Makefile](https://github.com/PxaMMaxP/Xilinx-ISE-Makefile). This page contains comprehensive guidance on setup and usage to get you started quickly.
+## Bus Cycles Visualized
 
-### Directory Structure
+- EPP Address Write Cycle
+  ![Waveform of the EPP Address Write Cycle](docs/DEPP/wavedrom_HWwR0.svg "EPP Address Write")
 
-The project is organized into various subdirectories, each serving a specific role in the development process. For an explanation of the directory structure and the contents of each subdirectory, please refer to the `README.md` files located within the subdirectories. These documents provide valuable insights into how the project is organized and how to navigate the files and folders efficiently.
+- EPP Data Write Cycle
+  ![Waveform of the EPP Data Write Cycle](docs/DEPP/wavedrom_ypdi1.svg "EPP Data Write")
 
-### Getting Started
+- EPP Data Read Cycle
+  ![Waveform of the EPP Data Read Cycle](docs/DEPP/wavedrom_91sO2.svg "EPP Data Read")
 
-To begin using this VHDL Project Template, clone the repository to your local machine and follow the instructions provided in the subdirectory `README.md` files to understand the project layout. Then, head over to the URL mentioned above for details on using the Makefile with the Xilinx Build Tools.
+## Port Definitions
 
-Thank you for choosing this VHDL Project Template. We hope it accelerates your development process and helps you achieve your project goals efficiently.
+| Port Name        | Direction | Type        | Description                                        |
+| ---------------- | --------- | ----------- | -------------------------------------------------- |
+| CLK              | in        | std_logic   | Clock signal. Rising edge triggered.               |
+| CE               | in        | std_logic   | Chip enable. `1` = enabled, `0` = disabled.        |
+| RST              | in        | std_logic   | Reset signal. `1` = reset, `0` = normal operation. |
+| EPP-Interface    | out       | Virtual bus | EPP Interface for address and data operations.     |
+| FIFO-Data-Out    | out       | Virtual bus | FIFO compatible data and address output interface. |
+| FIFO-Data-In     | in        | Virtual bus | FIFO compatible data input interface.              |
+| FIFO-Address-Out | out       | Virtual bus | FIFO compatible request address output interface.  |
 
----
+Detailed information on virtual bus port configurations can be found within the [module's documentation](docs/DEPP/DEPP.md).
 
-# Deutsch
+## Dependencies
 
-## VHDL-Projektvorlage unter Verwendung von Xilinx Build Tools mit Makefile
+The module depends on standard logic and numeric libraries available in VHDL. Ensure you have the latest version of the Digilent Adept software for proper interfacing with the module.
 
-Willkommen im Repository der VHDL-Projektvorlage. Dieses Projekt wurde entwickelt, um Ihren FPGA-Entwicklungsprozess mit den Xilinx ISE Build Tools zu vereinfachen, integriert mit einem praktischen Makefile-Ansatz zum Bauen und Synthetisieren Ihrer VHDL-Designs.
+## Contributing
 
-### Verwendung des Makefiles
+Contributions to improve the module or extend its capabilities are welcome. Please adhere to the existing coding standards and provide documentation for any changes made.
 
-Um das Makefile für den Bau Ihrer VHDL-Projekte zu verwenden, stellen Sie sicher, dass die Xilinx Build Tools auf Ihrem System installiert sind. Das Makefile ist speziell so konfiguriert, dass es mit diesen Tools arbeitet, um den Bauprozess zu automatisieren.
+## License
 
-Für detaillierte Anweisungen zur Verwendung des Makefiles besuchen Sie bitte die folgende URL: [Xilinx ISE Makefile](https://github.com/PxaMMaxP/Xilinx-ISE-Makefile). Diese Seite enthält umfassende Anleitungen zur Einrichtung und Verwendung, damit Sie schnell starten können.
+This module is open source and is distributed under the MIT license. Please see the [LICENSE](LICENSE) file for full details.
 
-### Verzeichnisstruktur
+## Acknowledgments
 
-Das Projekt ist in verschiedene Unterverzeichnisse organisiert, von denen jedes eine spezifische Rolle im Entwicklungsprozess spielt. Für eine Erklärung der Verzeichnisstruktur und des Inhalts jedes Unterverzeichnisses beachten Sie bitte die `README.md`-Dateien, die sich in den Unterverzeichnissen befinden. Diese Dokumente bieten wertvolle Einblicke, wie das Projekt organisiert ist und wie Sie effizient durch die Dateien und Ordner navigieren.
-
-### Erste Schritte
-
-Um mit dieser VHDL-Projektvorlage zu beginnen, klonen Sie das Repository auf Ihre lokale Maschine und folgen Sie den Anweisungen in den `README.md`-Dateien der Unterverzeichnisse, um das Layout des Projekts zu verstehen. Anschließend besuchen Sie die oben genannte URL für Details zur Verwendung des Makefiles mit den Xilinx Build Tools.
-
-Vielen Dank, dass Sie sich für diese VHDL-Projektvorlage entschieden haben. Wir hoffen, dass sie Ihren Entwicklungsprozess beschleunigt und Ihnen hilft, Ihre Projektziele effizient zu erreichen.
+Special thanks to the Digilent team for providing a reference manual in which the diagrams and the description in the text are contradictory ;-)

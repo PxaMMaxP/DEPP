@@ -6,8 +6,18 @@
 ## worldwide. This software is distributed without any warranty.
 ###########################################################################
 
-include project.cfg
+###########################################################################
+# Version
+###########################################################################
 
+Makefile_Version := 1.0.0
+$(info ISE Makefile Version: $(Makefile_Version))
+
+###########################################################################
+# Include project configuration
+###########################################################################
+
+include project.cfg
 
 ###########################################################################
 # Default values
@@ -25,30 +35,32 @@ ifndef TARGET_PART
     $(error TARGET_PART must be defined)
 endif
 
-TOPLEVEL        ?= $(PROJECT)
-CONSTRAINTS     ?= $(PROJECT).ucf
-BITFILE         ?= build/$(PROJECT).bit
+TOPLEVEL         ?= $(PROJECT)
+CONSTRAINTS      ?= $(PROJECT).ucf
+BITFILE          ?= build/$(PROJECT).bit
+ 
+COMMON_OPTS      ?= -intstyle xflow
+XST_OPTS         ?=
+NGDBUILD_OPTS    ?=
+MAP_OPTS         ?= -detail
+PAR_OPTS         ?=
+BITGEN_OPTS      ?=
+TRACE_OPTS       ?= -v 3 -n 3
+FUSE_OPTS        ?= -incremental
+ 
+PROGRAMMER       ?= none
+PROGRAMMER_PRE   ?=
+ 
+IMPACT_OPTS      ?= -batch impact.cmd
+ 
+DJTG_EXE         ?= djtgcfg
+DJTG_DEVICE      ?= DJTG_DEVICE-NOT-SET
+DJTG_INDEX       ?= 0
+DJTG_FLASH_INDEX ?= 1
 
-COMMON_OPTS     ?= -intstyle xflow
-XST_OPTS        ?=
-NGDBUILD_OPTS   ?=
-MAP_OPTS        ?=
-PAR_OPTS        ?=
-BITGEN_OPTS     ?=
-TRACE_OPTS      ?=
-FUSE_OPTS       ?= -incremental
-
-PROGRAMMER      ?= none
-
-IMPACT_OPTS     ?= -batch impact.cmd
-
-DJTG_EXE        ?= djtgcfg
-DJTG_DEVICE     ?= DJTG_DEVICE-NOT-SET
-DJTG_INDEX      ?= 0
-
-XC3SPROG_EXE    ?= xc3sprog
-XC3SPROG_CABLE  ?= none
-XC3SPROG_OPTS   ?=
+XC3SPROG_EXE     ?= xc3sprog
+XC3SPROG_CABLE   ?= none
+XC3SPROG_OPTS    ?=
 
 
 ###########################################################################
@@ -76,6 +88,28 @@ RUN = @echo "\n\e[1;33m============ $(1) ============\e[m\n"; \
 # isim executables don't work without this
 export XILINX
 
+# Initialize the libs and paths variables for VHDL and Verilog sources
+VHD_PATHS ?=
+VHD_LIBS  ?=
+V_PATHS   ?=
+V_LIBS    ?=
+
+# Define a function to process source files
+define process_sources
+$(foreach src,$(1),\
+    $(eval lib_and_path=$(subst :, ,$(src))) \
+    $(eval libname=$(word 1,$(lib_and_path))) \
+    $(eval filepath=$(word 2,$(lib_and_path))) \
+    $(if $(filepath),,$(eval filepath=$(libname)) $(eval libname=work)) \
+    $(eval $(2) += $(libname)) \
+    $(eval $(3) += $(filepath)) \
+)
+endef
+
+# Run the function for VHDL sources
+$(eval $(call process_sources,$(VHDSOURCE),VHD_LIBS,VHD_PATHS))
+# Run the function for Verilog sources
+$(eval $(call process_sources,$(VSOURCE),V_LIBS,V_PATHS))
 
 ###########################################################################
 # Default build
@@ -90,8 +124,9 @@ build/$(PROJECT).prj: project.cfg
 	@echo "Updating $@"
 	@mkdir -p build
 	@rm -f $@
-	@$(foreach file,$(VSOURCE),echo "verilog work \"../$(file)\"" >> $@;)
-	@$(foreach file,$(VHDSOURCE),echo "vhdl work \"../$(file)\"" >> $@;)
+	@$(foreach idx,$(shell seq 1 $(words $(V_PATHS))),echo "verilog $(word $(idx),$(V_LIBS)) \"../$(word $(idx),$(V_PATHS))\"" >> $@;)
+	@$(foreach idx,$(shell seq 1 $(words $(VHD_PATHS))),echo "vhdl $(word $(idx),$(VHD_LIBS)) \"../$(word $(idx),$(VHD_PATHS))\"" >> $@;)
+
 
 build/$(PROJECT)_sim.prj: build/$(PROJECT).prj
 	@cp build/$(PROJECT).prj $@
@@ -113,7 +148,7 @@ build/$(PROJECT).scr: project.cfg
 	    "-p $(TARGET_PART)" \
 	    > build/$(PROJECT).scr
 
-$(BITFILE): project.cfg $(VSOURCE) $(CONSTRAINTS) build/$(PROJECT).prj build/$(PROJECT).scr
+$(BITFILE): project.cfg $(V_PATHS) $(VHD_PATHS) $(CONSTRAINTS) build/$(PROJECT).prj build/$(PROJECT).scr
 	@mkdir -p build
 	$(call RUN,xst) $(COMMON_OPTS) \
 	    -ifn $(PROJECT).scr
@@ -153,7 +188,7 @@ trace: project.cfg $(BITFILE)
 
 test: $(TEST_EXES)
 
-build/isim_%$(EXE): build/$(PROJECT)_sim.prj $(VSOURCE) $(VHDSOURCE) $(VTEST) $(VHDTEST)
+build/isim_%$(EXE): $(V_PATHS) $(VHD_PATHS) build/$(PROJECT)_sim.prj $(VTEST) $(VHDTEST)
 	$(call RUN,fuse) $(COMMON_OPTS) $(FUSE_OPTS) \
 	    -prj $(PROJECT)_sim.prj \
 	    -o isim_$*$(EXE) \
@@ -176,17 +211,17 @@ isimgui: build/isim_$(TB)$(EXE)
 
 ifeq ($(PROGRAMMER), impact)
 prog: $(BITFILE)
-	sudo $(XILINX)/bin/$(XILINX_PLATFORM)/impact $(IMPACT_OPTS)
+	$(PROGRAMMER_PRE) $(XILINX)/bin/$(XILINX_PLATFORM)/impact $(IMPACT_OPTS)
 endif
 
 ifeq ($(PROGRAMMER), digilent)
 prog: $(BITFILE)
-	yes Y | sudo $(DJTG_EXE) prog -d $(DJTG_DEVICE) -i $(DJTG_INDEX) -f $(BITFILE)
+	$(PROGRAMMER_PRE) $(DJTG_EXE) prog -d $(DJTG_DEVICE) -i $(DJTG_INDEX) -f $(BITFILE)
 endif
 
 ifeq ($(PROGRAMMER), xc3sprog)
 prog: $(BITFILE)
-	sudo $(XC3SPROG_EXE) -c $(XC3SPROG_CABLE) $(XC3SPROG_OPTS) $(BITFILE)
+	$(PROGRAMMER_PRE) $(XC3SPROG_EXE) -c $(XC3SPROG_CABLE) $(XC3SPROG_OPTS) $(BITFILE)
 endif
 
 ifeq ($(PROGRAMMER), none)
@@ -200,10 +235,7 @@ endif
 
 ifeq ($(PROGRAMMER), digilent)
 flash: $(BITFILE)
-	yes Y | sudo $(DJTG_EXE) prog -d $(DJTG_DEVICE) -i $(DJTG_FLASH_INDEX) -f $(BITFILE)
+	$(PROGRAMMER_PRE) $(DJTG_EXE) prog -d $(DJTG_DEVICE) -i $(DJTG_FLASH_INDEX) -f $(BITFILE)
 endif
 
-
 ###########################################################################
-
-# vim: set filetype=make: #

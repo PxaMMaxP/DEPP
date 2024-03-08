@@ -1,0 +1,59 @@
+### Pin Constraints for the Nexys 2 Board ###
+NET CLK	                    LOC = B8; 
+NET CLK	                    TNM_NET = CLOCK;
+TIMESPEC TS_CLOCK = PERIOD CLOCK 50 MHz HIGH 50 %;
+
+NET "RST"                   LOC = "B18"; # BTN0
+NET "DataOutFullFlag"       LOC = "D18"; # BTN1
+NET "RequestFullFlag"       LOC = "E18"; # BTN2
+
+NET "LED<0>"                LOC = "J14";
+NET "LED<1>"                LOC = "J15";
+NET "LED<2>"                LOC = "K15";
+NET "LED<3>"                LOC = "K14";
+NET "LED<4>"                LOC = "E16";
+NET "LED<5>"                LOC = "P16";
+NET "LED<6>"                LOC = "E4";
+NET "LED<7>"                LOC = "P4";
+
+NET "Switches<0>"           LOC = "G18";
+NET "Switches<1>"           LOC = "H18";
+NET "Switches<2>"           LOC = "K18";
+NET "Switches<3>"           LOC = "K17";
+NET "Switches<4>"           LOC = "L14";
+NET "Switches<5>"           LOC = "L13";
+NET "Switches<6>"           LOC = "N17";
+NET "Switches<7>"           LOC = "R17";  
+### ##################################### ###
+
+### DEPP Interface ###
+NET "DEPP_AddressEnable"    LOC = "V14"; 
+NET "DEPP_DataEnable"       LOC = "U14";
+NET "DEPP_WriteEnable"      LOC = "V16"; 
+NET "DEPP_Wait"             LOC = "N9"; 
+
+NET "DEPP_Bus<0>"           LOC = "R14"; 
+NET "DEPP_Bus<1>"           LOC = "R13"; 
+NET "DEPP_Bus<2>"           LOC = "P13"; 
+NET "DEPP_Bus<3>"           LOC = "T12"; 
+NET "DEPP_Bus<4>"           LOC = "N11"; 
+NET "DEPP_Bus<5>"           LOC = "R11";
+NET "DEPP_Bus<6>"           LOC = "P10";
+NET "DEPP_Bus<7>"           LOC = "R10";
+### ############## ###
+
+### Logik Analyzer ###
+NET "LA_AddressEnable"      LOC = "L15"; # JA 0
+NET "LA_DataEnable"         LOC = "K12"; # JA 1
+NET "LA_WriteEnable"        LOC = "L17"; # JA 2
+NET "LA_Wait"               LOC = "M15"; # JA 3
+
+NET "LA_Bus<0>"             LOC = "M13"; # JB 0
+NET "LA_Bus<1>"             LOC = "R18"; # JB 1
+NET "LA_Bus<2>"             LOC = "R15"; # JB 2
+NET "LA_Bus<3>"             LOC = "T17"; # JB 3
+NET "LA_Bus<4>"             LOC = "P17"; # JB 4
+NET "LA_Bus<5>"             LOC = "R16"; # JB 5
+NET "LA_Bus<6>"             LOC = "T18"; # JB 6
+NET "LA_Bus<7>"             LOC = "U18"; # JB 7
+### ############## ###
