@@ -14,7 +14,7 @@
 --@             **or** the requested address is transferred first and then the corresponding data is expected.
 --@             ### Data Write:
 --@             With a data write request, the module transfers the **data** and the **address** 
---@             to the two corresponding FIFO interfaces.
+--@             to the corresponding FIFO interface.
 --@             ### Data Read:
 --@             With a data read request, the module transfers the **requested address** 
 --@             to the FIFO interface. It then expects the corresponding data 
@@ -183,7 +183,7 @@ begin
 
     DataInFifo_DataAviable     <= not DataInFifo_EmptyFlag;
     DataOutFifo_WriteEnable    <= InterWriteEnableOut;
-    AddressOutFifo_WriteEnable <= InterRequestEnable or InterWriteEnableOut;
+    AddressOutFifo_WriteEnable <= InterRequestEnable;
 
     --@ Shifts the value from the `DEPP_AddressEnable` signal into the `EPP_AddressEnableShiftRegister`
     --@ for the rising/falling edge detection.
