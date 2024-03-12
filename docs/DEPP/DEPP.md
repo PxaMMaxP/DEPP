@@ -4,7 +4,7 @@
 
 ## Diagram
 
-![Module Diagram](DEPP.svg "DEPP Module")
+![Diagram](DEPP.svg "Diagram")
 
 ## Description
 
@@ -14,13 +14,44 @@ and the Digilent Adept software.
 
 **Measured data rate ≈ 4.68 kByte/s**
 
-Below are diagrams of the EPP bus:
+## Usage
 
-![Waveform of the EPP Address Write Cycle](wavedrom_HWwR0.svg "EPP Address Write")
+The module is designed to be used with a FIFO interface.
+Either the data & address (**write**) are transferred via the FIFO interface
+**or** the requested address is transferred first and then the corresponding data is expected.
 
-![Waveform of the EPP Data Write Cycle](wavedrom_ypdi1.svg "EPP Data Write")
+### Data Write:
 
-![Waveform of the EPP Data Read Cycle](wavedrom_91sO2.svg "EPP Data Read")
+With a data write request, the module transfers the **data** and the **address**
+to the two corresponding FIFO interfaces.
+
+### Data Read:
+
+With a data read request, the module transfers the **requested address**
+to the FIFO interface. It then expects the corresponding data
+via the data input FIFO.
+
+## History:
+
+- 0.2.0 (2010.05.30) Initial version
+- 0.3.0 (2024.03.06) Refactored and commented
+- 0.3.1 (2024.03.09) Complet overhaul of the module
+- 0.3.2 (2024.03.13) The forwarding of the address to be read to the FIFO is now implemented correctly.
+  A usage description has been added. Documentation improved.
+
+## Timing diagrams of the EPP bus
+
+### EPP Address Write
+
+![alt text](wavedrom_fLwf0.svg "title")
+
+### EPP Data Write
+
+![alt text](wavedrom_lvks1.svg "title")
+
+### EPP Data Read
+
+![alt text](wavedrom_J3G12.svg "title")
 
 ## Ports
 
@@ -79,7 +110,7 @@ Below are diagrams of the EPP bus:
 | EPP_AddressEnableShiftRegister | std_logic_vector(1 downto 0) | Shift register for the rising/falling edge detection of the `DEPP_AddressEnable` signal |
 | EPP_DataEnableShiftRegister    | std_logic_vector(1 downto 0) | Shift register for the rising/falling edge detection of the `DEPP_DataEnable` signal    |
 | Mode                           | ModeType                     | The current state of the main state machine                                             |
-| InterWriteEnableOut            | std_logic                    | The output signals for the output data fifo                                             |
+| InterWriteEnableOut            | std_logic                    | The output signals for the output data fifo; also controls the address fifo.            |
 | InterRequestEnable             | std_logic                    | The output signals for the output address fifo                                          |
 | InterAddressEnable             | std_logic                    | Intermediary signal to start the address write cycle                                    |
 | DataInFifo_DataAviable         | std_logic                    | Negated `DataInFifo_EmptyFlag` signal                                                   |

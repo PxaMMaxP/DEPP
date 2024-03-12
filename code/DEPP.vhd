@@ -1,6 +1,6 @@
 ----------------------------------------------------------------------------------
 -- @name        Digilent EPP Interface
--- @version     0.3.1
+-- @version     0.3.2
 -- @author      Maximilian Passarello (mpassarello.de)
 --@             An EPP interface for Digilent FPGA boards
 --@             This interface is designed to be used with the Digilent EPP interface
@@ -8,14 +8,28 @@
 --@             
 --@             **Measured data rate ≈ 4.68 kByte/s**
 --@             
---@             Below are diagrams of the EPP bus:
--- @history
--- - 0.2.0 (2010.05.30) Initial version
--- - 0.3.0 (2024.03.06) Refactored and commented
--- - 0.3.1 (2024.03.09) Complet overhaul of the module
+--@             ## Usage
+--@             The module is designed to be used with a FIFO interface.
+--@             Either the data & address (**write**) are transferred via the FIFO interface 
+--@             **or** the requested address is transferred first and then the corresponding data is expected.
+--@             ### Data Write:
+--@             With a data write request, the module transfers the **data** and the **address** 
+--@             to the two corresponding FIFO interfaces.
+--@             ### Data Read:
+--@             With a data read request, the module transfers the **requested address** 
+--@             to the FIFO interface. It then expects the corresponding data 
+--@             via the data input FIFO.
+--@
+--@             
+--@ ## History:
+--@ - 0.2.0 (2010.05.30) Initial version
+--@ - 0.3.0 (2024.03.06) Refactored and commented
+--@ - 0.3.1 (2024.03.09) Complet overhaul of the module
+--@ - 0.3.2 (2024.03.13) The forwarding of the address to be read to the FIFO is now implemented correctly. 
+--@                      A usage description has been added. Documentation improved.
 ----------------------------------------------------------------------------------
--- Timing Diagram's
--- EPP Address Write
+--@ ## Timing diagrams of the EPP bus
+--@ ### EPP Address Write
 --@ {
 --@   "signal": [
 --@     { "name": "DEPP_Bus", "wave": "xx3....xxx", "data": ["Adress"] },
@@ -34,7 +48,7 @@
 --@   },
 --@   "edge": ["A+B min. 80 ns", "C+D min. 40ns", "E+F 0 to 10ms", "H+I 0 to 10ms"]
 --@ }
--- EPP Data Write
+--@ ### EPP Data Write
 --@ {
 --@   "signal": [
 --@     { "name": "DEPP_Bus", "wave": "xx3....xxx", "data": ["Data"] },
@@ -53,7 +67,7 @@
 --@   },
 --@   "edge": ["A+B min. 80 ns", "C+D min. 40ns", "E+F 0 to 10ms", "H+I 0 to 10ms"]
 --@ }
--- EPP Data Read
+--@ ### EPP Data Read
 --@ {
 --@   "signal": [
 --@     { "name": "DEPP_Bus", "wave": "zz...3...x", "data": ["Data"] },
@@ -157,7 +171,7 @@ architecture Behavioral of DEPP is
     --@ The current state of the main state machine
     signal Mode : ModeType := Idle;
 
-    --@ The output signals for the output data fifo
+    --@ The output signals for the output data fifo; also controls the address fifo.
     signal InterWriteEnableOut : std_logic := '0';
     --@ The output signals for the output address fifo
     signal InterRequestEnable : std_logic := '0';
@@ -169,7 +183,7 @@ begin
 
     DataInFifo_DataAviable     <= not DataInFifo_EmptyFlag;
     DataOutFifo_WriteEnable    <= InterWriteEnableOut;
-    AddressOutFifo_WriteEnable <= InterRequestEnable;
+    AddressOutFifo_WriteEnable <= InterRequestEnable or InterWriteEnableOut;
 
     --@ Shifts the value from the `DEPP_AddressEnable` signal into the `EPP_AddressEnableShiftRegister`
     --@ for the rising/falling edge detection.
