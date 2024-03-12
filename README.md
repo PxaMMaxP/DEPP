@@ -14,15 +14,15 @@ The `DEPP.vhd` module is designed as an Enhanced Parallel Port (EPP) interface f
 
 - EPP Address Write Cycle
 
-  ![Waveform of the EPP Address Write Cycle](docs/DEPP/wavedrom_HWwR0.svg "EPP Address Write")
+  ![Waveform of the EPP Address Write Cycle](docs/DEPP/wavedrom_fLwf0.svg "EPP Address Write")
 
 - EPP Data Write Cycle
 
-  ![Waveform of the EPP Data Write Cycle](docs/DEPP/wavedrom_ypdi1.svg "EPP Data Write")
+  ![Waveform of the EPP Data Write Cycle](docs/DEPP/wavedrom_lvks1.svg "EPP Data Write")
 
 - EPP Data Read Cycle
 
-  ![Waveform of the EPP Data Read Cycle](docs/DEPP/wavedrom_91sO2.svg "EPP Data Read")
+  ![Waveform of the EPP Data Read Cycle](docs/DEPP/wavedrom_J3G12.svg "EPP Data Read")
 
 ### Logic Analyzer Captures
 
